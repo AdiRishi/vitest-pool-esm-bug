@@ -18,5 +18,8 @@
 		"vitest": "~2.0.5",
 		"wrangler": "^3.78.2"
 	},
-	"packageManager": "pnpm@9.10.0"
+	"packageManager": "pnpm@9.10.0",
+	"dependencies": {
+		"@clerk/backend": "^1.11.1"
+	}
 }
