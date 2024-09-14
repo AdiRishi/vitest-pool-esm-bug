@@ -8,6 +8,11 @@ import worker from '../src/index';
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 describe('Hello World worker', () => {
+	it('responds with Hello World! (integration style)', async () => {
+		const response = await SELF.fetch('https://example.com');
+		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
+	});
+
 	it('responds with Hello World! (unit style)', async () => {
 		const request = new IncomingRequest('http://example.com');
 		// Create an empty context to pass to `worker.fetch()`.
@@ -17,9 +22,27 @@ describe('Hello World worker', () => {
 		await waitOnExecutionContext(ctx);
 		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
 	});
+});
 
-	it('responds with Hello World! (integration style)', async () => {
-		const response = await SELF.fetch('https://example.com');
-		expect(await response.text()).toMatchInlineSnapshot(`"Hello World!"`);
+describe('RPC Tests', () => {
+	const externalUserId = 'EXTERNAL_USER_ID';
+	const badSession = 'REJECT_ME';
+	const goodSession = 'ACCEPT_ME';
+
+	it('should be able to call JSRPC PingService', async () => {
+		const res = await env.PING_SERVICE.ping();
+		expect(res).toBe('pong');
+	});
+
+	it('should reject user sessions appropriately', async () => {
+		using userService = await env.AUTHENTICATED_USER_SERVICE.getUserService(externalUserId, badSession);
+		expect(userService).toBeNull();
+	});
+
+	it('should create a userService with a good cookie', async () => {
+		using userService = await env.AUTHENTICATED_USER_SERVICE.getUserService(externalUserId, goodSession);
+		expect(userService).not.toBeNull();
+		const userId = await userService!.getUserExternalId();
+		expect(userId).toBe(externalUserId);
 	});
 });
